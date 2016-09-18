@@ -7,197 +7,191 @@
 //
 
 #import "ECHttpRequestManager.h"
-#import "ECHttpRequestCache.h"
 #import "AFNetworking.h"
+#import "AFNetworkActivityIndicatorManager.h"
 
 #ifdef DEBUG
-#define PPLog(fmt, ...) NSLog((@"%s [Line %d] " fmt), __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__);
+#define ECLog(fmt, ...) NSLog((@"%s [Line %d] " fmt), __PRETTY_FUNCTION__, __LINE__, ##__VA_ARGS__);
 #else
-#define PPLog(...)
+#define ECLog(...)
 #endif
 
 @implementation ECHttpRequestManager
 
+static BOOL _isNetwork;
 static AFHTTPSessionManager *_manager = nil;
-static HttpRequestStatus _status;
-
 
 #pragma mark - 开始监听网络
-+ (void)startMonitoringNetwork
++ (void)networkStatusWithBlock:(HttpRequestStatus)httpStatus
 {
-    AFNetworkReachabilityManager *manager = [AFNetworkReachabilityManager sharedManager];
-    
-    [manager setReachabilityStatusChangeBlock:^(AFNetworkReachabilityStatus status) {
-        switch (status)
-        {
-            case AFNetworkReachabilityStatusUnknown:
-                _status(ECHttpRequestStatusUnknown);
-                PPLog(@"未知网络");
-                break;
-            case AFNetworkReachabilityStatusNotReachable:
-                _status(ECHttpRequestStatusNotReachable);
-                PPLog(@"无网络");
-                break;
-            case AFNetworkReachabilityStatusReachableViaWWAN:
-                _status(ECHttpRequestStatusReachableViaWWAN);
-                PPLog(@"手机自带网络");
-                break;
-            case AFNetworkReachabilityStatusReachableViaWiFi:
-                _status(ECHttpRequestStatusReachableViaWiFi);
-                PPLog(@"WIFI");
-                break;
-        }
-    }];
-    [manager startMonitoring];
-    
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        
+        AFNetworkReachabilityManager *manager = [AFNetworkReachabilityManager sharedManager];
+        [manager setReachabilityStatusChangeBlock:^(AFNetworkReachabilityStatus status) {
+            switch (status)
+            {
+                case AFNetworkReachabilityStatusUnknown:
+                    httpStatus ? httpStatus(ECHttpRequestStatusUnknown) : nil;
+                    _isNetwork = NO;
+                    ECLog(@"未知网络");
+                    break;
+                case AFNetworkReachabilityStatusNotReachable:
+                    httpStatus ? httpStatus(ECHttpRequestStatusNotReachable) : nil;
+                    _isNetwork = NO;
+                    ECLog(@"无网络");
+                    break;
+                case AFNetworkReachabilityStatusReachableViaWWAN:
+                    httpStatus ? httpStatus(ECHttpRequestStatusReachableViaWWAN) : nil;
+                    _isNetwork = YES;
+                    ECLog(@"手机自带网络");
+                    break;
+                case AFNetworkReachabilityStatusReachableViaWiFi:
+                    httpStatus ? httpStatus(ECHttpRequestStatusReachableViaWiFi) : nil;
+                    _isNetwork = YES;
+                    ECLog(@"WIFI");
+                    break;
+            }
+        }];
+        
+        [manager startMonitoring];
+    });
 }
 
-+ (void)networkStatusWithBlock:(HttpRequestStatus)status
+
++ (BOOL)currentNetworkStatus
 {
-    _status = status;
+    return _isNetwork;
 }
+
 
 #pragma mark - GET请求无缓存
-+ (ECURLSessionTask *)GET:(NSString *)URL parameters:(NSDictionary *)parameters success:(HttpRequestSuccess)success failure:(HttpRequestFailed)failure
+
++ (NSURLSessionTask *)GET:(NSString *)URL
+               parameters:(NSDictionary *)parameters
+                  success:(HttpRequestSuccess)success
+                  failure:(HttpRequestFailed)failure
 {
-    [UIApplication sharedApplication].networkActivityIndicatorVisible = YES;
-    AFHTTPSessionManager *manager = [self createAFHTTPSessionManager];
-    return [manager GET:URL parameters:parameters progress:^(NSProgress * _Nonnull uploadProgress) {
-        
-    } success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
-        [UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
-        
-        success(responseObject);
-        PPLog(@"responseObject = %@",responseObject);
-        
-    } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
-        [UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
-        
-        failure ? failure(error) : nil;
-        PPLog(@"error = %@",error);
-    }];
+    return [self GET:URL parameters:parameters responseCache:nil success:success failure:failure];
 }
 
-#pragma mark - GET请求自动缓存
-+ (ECURLSessionTask *)GET:(NSString *)URL parameters:(NSDictionary *)parameters responseCache:(HttpRequestCache)responseCache success:(HttpRequestSuccess)success failure:(HttpRequestFailed)failure
-{
-    [UIApplication sharedApplication].networkActivityIndicatorVisible = YES;
-    //读取缓存
-    responseCache([ECHttpRequestCache getResponseCacheForKey:URL]);
-    
-    AFHTTPSessionManager *manager = [self createAFHTTPSessionManager];
-    return [manager GET:URL parameters:parameters progress:^(NSProgress * _Nonnull uploadProgress) {
-        
-    } success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
-        [UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
-        
-        success(responseObject);
-        //对数据进行异步缓存
-        [ECHttpRequestCache saveResponseCache:responseObject forKey:URL];
-        PPLog(@"responseObject = %@",responseObject);
-        
-    } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
-        [UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
-        
-        failure ? failure(error) : nil;
-        PPLog(@"error = %@",error);
-        
-    }];
-}
 
 #pragma mark - POST请求无缓存
-+ (ECURLSessionTask *)POST:(NSString *)URL parameters:(NSDictionary *)parameters success:(HttpRequestSuccess)success failure:(HttpRequestFailed)failure
+
++ (NSURLSessionTask *)POST:(NSString *)URL
+                parameters:(NSDictionary *)parameters
+                   success:(HttpRequestSuccess)success
+                   failure:(HttpRequestFailed)failure
 {
-    [UIApplication sharedApplication].networkActivityIndicatorVisible = YES;
-    
-    AFHTTPSessionManager *manager = [self createAFHTTPSessionManager];
-    return [manager POST:URL parameters:parameters progress:^(NSProgress * _Nonnull uploadProgress) {
-        
-    } success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
-        [UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
-        
-        success(responseObject);
-        PPLog(@"responseObject = %@",responseObject);
-    } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
-        [UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
-        
-        failure ? failure(error) : nil;
-        PPLog(@"error = %@",error);
-    }];
-    
+    return [self POST:URL parameters:parameters responseCache:nil success:success failure:failure];
 }
 
-#pragma mark - POST请求自动缓存
-+ (ECURLSessionTask *)POST:(NSString *)URL parameters:(NSDictionary *)parameters responseCache:(HttpRequestCache)responseCache success:(HttpRequestSuccess)success failure:(HttpRequestFailed)failure
+
+#pragma mark - GET请求自动缓存
+
++ (NSURLSessionTask *)GET:(NSString *)URL
+               parameters:(NSDictionary *)parameters
+            responseCache:(HttpRequestCache)responseCache
+                  success:(HttpRequestSuccess)success
+                  failure:(HttpRequestFailed)failure
 {
-    [UIApplication sharedApplication].networkActivityIndicatorVisible = YES;
-    
     //读取缓存
-    responseCache([ECHttpRequestCache getResponseCacheForKey:URL]);
+    responseCache ? responseCache([ECHttpRequestCache httpCacheForURL:URL parameters:parameters]) : nil;
     
-    AFHTTPSessionManager *manager = [self createAFHTTPSessionManager];
-    return [manager POST:URL parameters:parameters progress:^(NSProgress * _Nonnull uploadProgress) {
+    return [_manager GET:URL parameters:parameters progress:^(NSProgress * _Nonnull uploadProgress) {
         
     } success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
-        [UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
         
-        success(responseObject);
+        success ? success(responseObject) : nil;
         //对数据进行异步缓存
-        [ECHttpRequestCache saveResponseCache:responseObject forKey:URL];
-        PPLog(@"responseObject = %@",responseObject);
+        responseCache ? [ECHttpRequestCache setHttpCache:responseObject URL:URL parameters:parameters] : nil;
         
+        ECLog(@"responseObject = %@",responseObject);
     } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
-        [UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
         
         failure ? failure(error) : nil;
-        PPLog(@"error = %@",error);
+        ECLog(@"error = %@",error);
+        
+    }];
+}
+
+
+#pragma mark - POST请求自动缓存
+
++ (NSURLSessionTask *)POST:(NSString *)URL
+                parameters:(NSDictionary *)parameters
+             responseCache:(HttpRequestCache)responseCache
+                   success:(HttpRequestSuccess)success
+                   failure:(HttpRequestFailed)failure
+{
+    //读取缓存
+    responseCache ? responseCache([ECHttpRequestCache httpCacheForURL:URL parameters:parameters]) : nil;
+    
+    return [_manager POST:URL parameters:parameters progress:^(NSProgress * _Nonnull uploadProgress) {
+        
+    } success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
+        
+        success ? success(responseObject) : nil;
+        //对数据进行异步缓存
+        responseCache ? [ECHttpRequestCache setHttpCache:responseObject URL:URL parameters:parameters] : nil;
+        
+        ECLog(@"responseObject = %@",responseObject);
+        
+    } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
+        
+        failure ? failure(error) : nil;
+        ECLog(@"error = %@",error);
     }];
     
 }
 
 #pragma mark - 上传图片文件
-+ (ECURLSessionTask *)uploadWithURL:(NSString *)URL parameters:(NSDictionary *)parameters images:(NSArray<UIImage *> *)images name:(NSString *)name fileName:(NSString *)fileName mimeType:(NSString *)mimeType progress:(HttpProgress)progress success:(HttpRequestSuccess)success failure:(HttpRequestFailed)failure
+
++ (NSURLSessionTask *)uploadWithURL:(NSString *)URL
+                         parameters:(NSDictionary *)parameters
+                             images:(NSArray<UIImage *> *)images
+                               name:(NSString *)name
+                           fileName:(NSString *)fileName
+                           mimeType:(NSString *)mimeType
+                           progress:(HttpProgress)progress
+                            success:(HttpRequestSuccess)success
+                            failure:(HttpRequestFailed)failure
 {
-    [UIApplication sharedApplication].networkActivityIndicatorVisible = YES;
     
-    AFHTTPSessionManager *manager = [self createAFHTTPSessionManager];
-    return [manager POST:URL parameters:parameters constructingBodyWithBlock:^(id<AFMultipartFormData>  _Nonnull formData) {
+    return [_manager POST:URL parameters:parameters constructingBodyWithBlock:^(id<AFMultipartFormData>  _Nonnull formData) {
         
         //压缩-添加-上传图片
         [images enumerateObjectsUsingBlock:^(UIImage * _Nonnull image, NSUInteger idx, BOOL * _Nonnull stop) {
             
             NSData *imageData = UIImageJPEGRepresentation(image, 0.5);
             [formData appendPartWithFileData:imageData name:name fileName:[NSString stringWithFormat:@"%@%lu.%@",fileName,(unsigned long)idx,mimeType?mimeType:@"jpeg"] mimeType:[NSString stringWithFormat:@"image/%@",mimeType ? mimeType : @"jpeg"]];
-            
         }];
     } progress:^(NSProgress * _Nonnull uploadProgress) {
         //上传进度
         progress ? progress(uploadProgress) : nil;
-        
     } success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
-        [UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
         
-        success(responseObject);
-        PPLog(@"responseObject = %@",responseObject);
+        success ? success(responseObject) : nil;
+        ECLog(@"responseObject = %@",responseObject);
     } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
-        [UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
         
         failure ? failure(error) : nil;
-        PPLog(@"error = %@",error);
+        ECLog(@"error = %@",error);
     }];
 }
 
 #pragma mark - 下载文件
-+ (ECURLSessionTask *)downloadWithURL:(NSString *)URL fileDir:(NSString *)fileDir progress:(HttpProgress)progress success:(void(^)(NSString *))success failure:(HttpRequestFailed)failure
++ (NSURLSessionTask *)downloadWithURL:(NSString *)URL
+                              fileDir:(NSString *)fileDir
+                             progress:(HttpProgress)progress
+                              success:(void(^)(NSString *))success
+                              failure:(HttpRequestFailed)failure
 {
-    [UIApplication sharedApplication].networkActivityIndicatorVisible = YES;
-    
-    AFHTTPSessionManager *manager = [self createAFHTTPSessionManager];
     NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:URL]];
-    NSURLSessionDownloadTask *downloadTask = [manager downloadTaskWithRequest:request progress:^(NSProgress * _Nonnull downloadProgress) {
+    NSURLSessionDownloadTask *downloadTask = [_manager downloadTaskWithRequest:request progress:^(NSProgress * _Nonnull downloadProgress) {
         //下载进度
         progress ? progress(downloadProgress) : nil;
-        PPLog(@"下载进度:%.2f%%",100.0*downloadProgress.completedUnitCount/downloadProgress.totalUnitCount);
+        ECLog(@"下载进度:%.2f%%",100.0*downloadProgress.completedUnitCount/downloadProgress.totalUnitCount);
         
     } destination:^NSURL * _Nonnull(NSURL * _Nonnull targetPath, NSURLResponse * _Nonnull response) {
         
@@ -212,16 +206,15 @@ static HttpRequestStatus _status;
         //拼接文件路径
         NSString *filePath = [downloadDir stringByAppendingPathComponent:response.suggestedFilename];
         
-        PPLog(@"downloadDir = %@",downloadDir);
+        ECLog(@"downloadDir = %@",downloadDir);
         
         //返回文件位置的URL路径
         return [NSURL fileURLWithPath:filePath];
         
     } completionHandler:^(NSURLResponse * _Nonnull response, NSURL * _Nullable filePath, NSError * _Nullable error) {
-        [UIApplication sharedApplication].networkActivityIndicatorVisible = NO;
         
+        if(failure && error) {failure(error) ; return ;};
         success ? success(filePath.absoluteString /** NSURL->NSString*/) : nil;
-        failure && error ? failure(error) : nil;
         
     }];
     
@@ -233,21 +226,50 @@ static HttpRequestStatus _status;
 }
 
 
-#pragma mark - 设置AFHTTPSessionManager相关属性
-
-+ (AFHTTPSessionManager *)createAFHTTPSessionManager
+#pragma mark - 初始化AFHTTPSessionManager相关属性
+/**
+ *  所有的HTTP请求共享一个AFHTTPSessionManager,原理参考地址:http://www.jianshu.com/p/5969bbb4af9f
+ *  + (void)initialize该初始化方法在当用到此类时候只调用一次
+ */
++ (void)initialize
 {
-    AFHTTPSessionManager *manager = [AFHTTPSessionManager manager];
-    //设置请求参数的类型:HTTP (AFJSONRequestSerializer,AFHTTPRequestSerializer)
-    manager.requestSerializer = [AFHTTPRequestSerializer serializer];
+    _manager = [AFHTTPSessionManager manager];
+    //设置请求参数的类型:JSON (AFJSONRequestSerializer,AFHTTPRequestSerializer)
+    _manager.requestSerializer = [AFJSONRequestSerializer serializer];
     //设置请求的超时时间
-    manager.requestSerializer.timeoutInterval = 30.f;
+    _manager.requestSerializer.timeoutInterval = 30.f;
     //设置服务器返回结果的类型:JSON (AFJSONResponseSerializer,AFHTTPResponseSerializer)
-    manager.responseSerializer = [AFJSONResponseSerializer serializer];
+    _manager.responseSerializer = [AFJSONResponseSerializer serializer];
     
-    manager.responseSerializer.acceptableContentTypes = [NSSet setWithObjects:@"application/json", @"text/json", @"text/javascript",@"text/html",@"text/plain", nil];
-    
-    return manager;
+    _manager.responseSerializer.acceptableContentTypes = [NSSet setWithObjects:@"application/json", @"text/html", @"text/json", @"text/plain", @"text/javascript", @"text/xml", @"image/*", nil];
+    //打开状态栏的等待菊花
+    [AFNetworkActivityIndicatorManager sharedManager].enabled = YES;
+}
+
+#pragma mark - 重置AFHTTPSessionManager相关属性
++ (void)setRequestSerializer:(ECRequestSerializer)requestSerializer
+{
+    _manager.requestSerializer = requestSerializer==ECRequestSerializerHTTP ? [AFHTTPRequestSerializer serializer] : nil ;
+}
+
++ (void)setResponseSerializer:(ECResponseSerializer)responseSerializer
+{
+    _manager.responseSerializer = responseSerializer==ECResponseSerializerHTTP ? [AFHTTPResponseSerializer serializer] : nil;
+}
+
++ (void)setRequestTimeoutInterval:(NSTimeInterval)time
+{
+    _manager.requestSerializer.timeoutInterval = time;
+}
+
++ (void)setValue:(NSString *)value forHTTPHeaderField:(NSString *)field
+{
+    [_manager.requestSerializer setValue:value forHTTPHeaderField:field];
+}
+
++ (void)openNetworkActivityIndicator:(BOOL)open
+{
+    !open ? [[AFNetworkActivityIndicatorManager sharedManager] setEnabled:NO] : nil ;
 }
 
 @end

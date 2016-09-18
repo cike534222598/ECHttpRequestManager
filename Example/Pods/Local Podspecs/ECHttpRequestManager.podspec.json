@@ -1,6 +1,6 @@
 {
   "name": "ECHttpRequestManager",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "summary": "ECHttpRequestManager是基于AFNetwork3.x开发的Http请求Manager.",
   "description": "ECHttpRequestManager是基于AFNetwork3.x开发的Http请求Manager,包括get、post请求,文件upload、download,网络监测等功能。",
   "homepage": "https://github.com/cike534222598/ECHttpRequestManager",
@@ -12,8 +12,8 @@
     "Jame": "cike534222598@qq.com"
   },
   "source": {
-    "git": "https://github.com/<GITHUB_USERNAME>/ECHttpRequestManager.git",
-    "tag": "0.1.0"
+    "git": "https://github.com/cike534222598/ECHttpRequestManager.git",
+    "tag": "1.0.0"
   },
   "platforms": {
     "ios": "7.0"

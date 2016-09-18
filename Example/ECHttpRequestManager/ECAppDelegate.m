@@ -7,17 +7,12 @@
 //
 
 #import "ECAppDelegate.h"
-#import "ECHttpRequestManager.h"
 
 @implementation ECAppDelegate
 
 - (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
 {
     // Override point for customization after application launch.
-    
-    //开始监测网络状态
-    [ECHttpRequestManager startMonitoringNetwork];
-
     return YES;
 }
 

@@ -41,7 +41,7 @@ static NSString *const downloadUrl = @"http://wvideo.spriteapp.cn/video/2016/032
             case ECHttpRequestStatusUnknown:
             case ECHttpRequestStatusNotReachable: {
                 self.networkData.text = @"没有网络";
-                [self getData:YES url:@"http://www.qinto.com/wap/index.php?ctl=article_cate&act=api_app_getarticle_cate&num=1&p=1"];
+                [self getData:YES url:dataUrl];
                 NSLog(@"无网络,加载缓存数据");
                 break;
             }
@@ -102,7 +102,7 @@ static NSString *const downloadUrl = @"http://wvideo.spriteapp.cn/video/2016/032
 
 - (IBAction)download:(UIButton *)sender {
     
-    static ECURLSessionTask *task = nil;
+    static NSURLSessionTask *task = nil;
     //开始下载
     if(!self.isDownload)
     {
@@ -121,12 +121,22 @@ static NSString *const downloadUrl = @"http://wvideo.spriteapp.cn/video/2016/032
             NSLog(@"下载进度 :%.2f%%,,%@",stauts,[NSThread currentThread]);
         } success:^(NSString *filePath) {
             
-            UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"下载完成!" message:nil delegate:nil cancelButtonTitle:@"确定" otherButtonTitles:nil];
+            UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"下载完成!"
+                                                                message:[NSString stringWithFormat:@"文件路径:%@",filePath]
+                                                               delegate:nil
+                                                      cancelButtonTitle:@"确定"
+                                                      otherButtonTitles:nil];
             [alertView show];
             [self.downloadBtn setTitle:@"重新下载" forState:UIControlStateNormal];
             NSLog(@"filePath = %@",filePath);
             
         } failure:^(NSError *error) {
+            UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"下载失败"
+                                                                message:[NSString stringWithFormat:@"%@",error]
+                                                               delegate:nil
+                                                      cancelButtonTitle:@"确定"
+                                                      otherButtonTitles:nil];
+            [alertView show];
             NSLog(@"error = %@",error);
         }];
         
@@ -139,8 +149,6 @@ static NSString *const downloadUrl = @"http://wvideo.spriteapp.cn/video/2016/032
         self.progress.progress = 0;
         [self.downloadBtn setTitle:@"开始下载" forState:UIControlStateNormal];
     }
-    
-    
     
 }
 
