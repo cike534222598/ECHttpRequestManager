@@ -8,9 +8,6 @@
 
 #import <Foundation/Foundation.h>
 
-// 过期提醒
-#define ECDeprecated(instead) NS_DEPRECATED(2_0, 2_0, 2_0, 2_0, instead)
-
 #pragma mark - 网络数据缓存类
 
 @interface ECHttpRequestCache : NSObject
@@ -51,6 +48,7 @@
 
 
 #pragma mark - 过期方法
+
 /**
  *  缓存网络数据(已过期!!!推荐使用:+ (void)setHttpCache:(id)httpData URL:(NSString *)URL parameters:(NSDictionary *)parameters)
  *
@@ -58,7 +56,7 @@
  *  @param key       缓存数据对应的key值,推荐填入请求的URL
  */
 
-+ (void)saveResponseCache:(id)responseCache forKey:(NSString *)key; ECDeprecated("该方法已过期,请使用 +(void)setHttpCache:(id)httpData URL:(NSString *)URL parameters:(NSDictionary *)parameters");
++ (void)saveResponseCache:(id)responseCache forKey:(NSString *)key;
 
 
 /**
@@ -69,6 +67,8 @@
  *  @return 缓存的数据
  */
 
-+ (id)getResponseCacheForKey:(NSString *)key; ECDeprecated("该方法已过期,请使用 +(id)httpCacheForURL:(NSString *)URL parameters:(NSDictionary *)parameters;");
++ (id)getResponseCacheForKey:(NSString *)key;
+
+
 
 @end
