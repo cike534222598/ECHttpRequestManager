@@ -1,0 +1,6 @@
+framework module Pods_ECHttpRequestManager_Example {
+  umbrella header "Pods-ECHttpRequestManager_Example-umbrella.h"
+
+  export *
+  module * { export * }
+}

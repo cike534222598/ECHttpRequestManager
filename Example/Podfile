@@ -1,0 +1,11 @@
+use_frameworks!
+
+target 'ECHttpRequestManager_Example' do
+  pod 'ECHttpRequestManager', :path => '../'
+
+  target 'ECHttpRequestManager_Tests' do
+    inherit! :search_paths
+
+    
+  end
+end
