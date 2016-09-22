@@ -12,6 +12,18 @@
 #import "ECHttpRequestCache.h"
 
 
+#pragma mark - ECHttpRequestManager扩展
+@interface NSString (ECHttpRequestManager)
+
+// 编码
+- (NSString *)encode;
+
+// 解码
+- (NSString *)decode;
+
+@end
+
+
 typedef NS_ENUM(NSUInteger, ECHttpRequestStatus) {
     /** 未知网络*/
     ECHttpRequestStatusUnknown,
@@ -187,6 +199,13 @@ typedef void(^HttpRequestStatus)(ECHttpRequestStatus status);
  */
 + (void)openNetworkActivityIndicator:(BOOL)open;
 
+/**
+ *  是否验证服务器证书:默认否
+ *
+ *  @param isAllow YES(是),NO(否)
+ */
++ (void)setSecurityPolicyAllowInvalidCertificates:(BOOL)isAllow;
+
 
 #pragma mark - 获取Ip地址
 /**
@@ -205,7 +224,17 @@ typedef void(^HttpRequestStatus)(ECHttpRequestStatus status);
  *
  *  @return 字符串
  */
-+ (NSString *)jsonToString:(NSDictionary *)dic;
++ (NSString *)jsonToString:(id)json;
+
+
+/**
+ *  Json转字典
+ *
+ *  @param json Json字符串
+ *
+ *  @return 字典
+ */
++ (NSDictionary *)jsonToDictionary:(id)json;
 
 
 @end

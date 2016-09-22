@@ -18,6 +18,39 @@
 #define ECLog(...)
 #endif
 
+
+#pragma mark - ECHttpRequestManager扩展
+@implementation NSString (ECHttpRequestManager)
+
+// 编码
+- (NSString *)encode
+{
+    NSString *outputString  = (NSString *)CFBridgingRelease(CFURLCreateStringByAddingPercentEscapes(NULL,
+                                                                                                    (CFStringRef)self,
+                                                                                                    NULL,
+                                                                                                    (CFStringRef)@"!*'();:@&amp;=+$,/?%#[]",
+                                                                                                    kCFStringEncodingUTF8
+                                                                                                    ));
+    outputString            = [outputString stringByReplacingOccurrencesOfString:@"<null>" withString:@""];
+    
+    return outputString;
+}
+
+// 解码
+- (NSString *)decode
+{
+    NSString *outputString = (NSString *)CFBridgingRelease(CFURLCreateStringByReplacingPercentEscapesUsingEncoding(kCFAllocatorDefault,
+                                                                                                                   (__bridge CFStringRef)self,
+                                                                                                                   CFSTR(""),
+                                                                                                                   kCFStringEncodingUTF8
+                                                                                                                   ));
+    return outputString;
+}
+
+@end
+
+
+
 @implementation ECHttpRequestManager
 
 static BOOL _isNetwork;
@@ -255,6 +288,8 @@ static AFHTTPSessionManager *_manager = nil;
     _manager.responseSerializer = [AFJSONResponseSerializer serializer];
     
     _manager.responseSerializer.acceptableContentTypes = [NSSet setWithObjects:@"application/json", @"text/html", @"text/json", @"text/plain", @"text/javascript", @"text/xml", @"image/*", nil];
+    //关闭验证服务器证书
+    _manager.securityPolicy.allowInvalidCertificates = YES;
     //打开状态栏的等待菊花
     [AFNetworkActivityIndicatorManager sharedManager].enabled = YES;
 }
@@ -285,6 +320,10 @@ static AFHTTPSessionManager *_manager = nil;
     !open ? [[AFNetworkActivityIndicatorManager sharedManager] setEnabled:NO] : nil ;
 }
 
++ (void)setSecurityPolicyAllowInvalidCertificates:(BOOL)isAllow
+{
+    _manager.securityPolicy.allowInvalidCertificates = isAllow;
+}
 
 #pragma mark - 获取Ip地址
 + (NSString *)ipAddress
@@ -323,16 +362,33 @@ static AFHTTPSessionManager *_manager = nil;
 }
 
 
-#pragma mark - Json转字符串
-+ (NSString *)jsonToString:(NSDictionary *)dic
+#pragma mark - Json转换
++ (NSString *)jsonToString:(id)json
 {
-    if(!dic){
+    if(!json){
         return nil;
     }
-    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:dic options:NSJSONWritingPrettyPrinted error:nil];
+    
+    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:json options:NSJSONWritingPrettyPrinted error:nil];
+    
     return [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
 }
 
+
++ (NSDictionary *)jsonToDictionary:(id)json
+{
+    NSDictionary *jsonObject = json;
+    
+    if ([json isKindOfClass:[NSData class]]){
+        jsonObject = [NSJSONSerialization JSONObjectWithData:json options:NSJSONReadingMutableLeaves error:nil];
+    }
+    
+    if ([json isKindOfClass:[NSString class]]){
+        jsonObject = [json object];
+    }
+    
+    return jsonObject?:json;
+}
 
 
 @end

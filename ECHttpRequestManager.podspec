@@ -8,7 +8,7 @@
 
 Pod::Spec.new do |s|
   s.name             = 'ECHttpRequestManager'
-  s.version          = '1.0.5'
+  s.version          = '1.0.6'
   s.summary          = 'ECHttpRequestManager是基于AFNetwork3.x开发的Http请求Manager.'
 
 # This description is used to generate tags and improve search results.

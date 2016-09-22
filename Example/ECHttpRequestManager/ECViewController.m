@@ -60,6 +60,8 @@ static NSString *const downloadUrl = @"http://wvideo.spriteapp.cn/video/2016/032
 - (void)getData:(BOOL)isOn url:(NSString *)url
 {
     
+    NSString *str = @"123456";
+    [str encode];
     //自动缓存
     if(isOn)
     {
