@@ -97,6 +97,8 @@ static AFHTTPSessionManager *_manager = nil;
                   success:(HttpRequestSuccess)success
                   failure:(HttpRequestFailed)failure
 {
+    ECLog(@"parameters = %@",parameters);
+
     //读取缓存
     responseCache ? responseCache([ECHttpRequestCache httpCacheForURL:URL parameters:parameters]) : nil;
     
@@ -126,6 +128,8 @@ static AFHTTPSessionManager *_manager = nil;
                    success:(HttpRequestSuccess)success
                    failure:(HttpRequestFailed)failure
 {
+    ECLog(@"parameters = %@",parameters);
+
     //读取缓存
     responseCache ? responseCache([ECHttpRequestCache httpCacheForURL:URL parameters:parameters]) : nil;
     
@@ -159,7 +163,12 @@ static AFHTTPSessionManager *_manager = nil;
                             success:(HttpRequestSuccess)success
                             failure:(HttpRequestFailed)failure
 {
-    
+    ECLog(@"parameters = %@",parameters);
+    ECLog(@"images = %@",images);
+    ECLog(@"name = %@",name);
+    ECLog(@"fileName = %@",fileName);
+    ECLog(@"mimeType = %@",mimeType);
+
     return [_manager POST:URL parameters:parameters constructingBodyWithBlock:^(id<AFMultipartFormData>  _Nonnull formData) {
         
         //压缩-添加-上传图片
@@ -189,6 +198,8 @@ static AFHTTPSessionManager *_manager = nil;
                               success:(void(^)(NSString *))success
                               failure:(HttpRequestFailed)failure
 {
+    ECLog(@"fileDir = %@",fileDir);
+
     NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:URL]];
     NSURLSessionDownloadTask *downloadTask = [_manager downloadTaskWithRequest:request progress:^(NSProgress * _Nonnull downloadProgress) {
         //下载进度
