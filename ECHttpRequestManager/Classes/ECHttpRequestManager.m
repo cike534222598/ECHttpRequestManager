@@ -287,7 +287,7 @@ static AFHTTPSessionManager *_manager = nil;
 
 
 #pragma mark - 获取Ip地址
-+ (NSString *)IpAddress
++ (NSString *)ipAddress
 {
     NSString *address = @"error";
     struct ifaddrs *interfaces = NULL;
@@ -320,8 +320,19 @@ static AFHTTPSessionManager *_manager = nil;
     freeifaddrs(interfaces);
     
     return address;
-    
 }
+
+
+#pragma mark - Json转字符串
++ (NSString *)jsonToString:(NSDictionary *)dic
+{
+    if(!dic){
+        return nil;
+    }
+    NSData *jsonData = [NSJSONSerialization dataWithJSONObject:dic options:NSJSONWritingPrettyPrinted error:nil];
+    return [[NSString alloc] initWithData:jsonData encoding:NSUTF8StringEncoding];
+}
+
 
 
 @end

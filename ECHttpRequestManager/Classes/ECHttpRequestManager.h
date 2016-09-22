@@ -194,6 +194,18 @@ typedef void(^HttpRequestStatus)(ECHttpRequestStatus status);
  *
  *  @return IpAddress
  */
-+ (NSString *)IpAddress;
++ (NSString *)ipAddress;
+
+
+#pragma mark - Json转字符串
+/**
+ *  Json转字符串
+ *
+ *  @param dic Json字符串
+ *
+ *  @return 字符串
+ */
++ (NSString *)jsonToString:(NSDictionary *)dic;
+
 
 @end
