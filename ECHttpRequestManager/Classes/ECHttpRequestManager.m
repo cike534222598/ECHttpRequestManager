@@ -276,7 +276,7 @@ static AFHTTPSessionManager *_manager = nil;
 
 
 #pragma mark - 获取Ip地址
-+ (NSString *)ipAddress
++ (NSString *)IpAddress
 {
     NSString *address = @"error";
     struct ifaddrs *interfaces = NULL;
