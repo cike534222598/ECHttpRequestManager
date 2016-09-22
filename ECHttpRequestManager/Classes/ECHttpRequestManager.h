@@ -188,4 +188,12 @@ typedef void(^HttpRequestStatus)(ECHttpRequestStatus status);
 + (void)openNetworkActivityIndicator:(BOOL)open;
 
 
+#pragma mark - 获取Ip地址
+/**
+ *  获取IpAddress
+ *
+ *  @return IpAddress
+ */
++ (NSString *)IpAddress;
+
 @end
