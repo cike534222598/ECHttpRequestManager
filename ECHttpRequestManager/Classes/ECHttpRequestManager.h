@@ -202,7 +202,7 @@ typedef void(^HttpRequestStatus)(ECHttpRequestStatus status);
 /**
  *  是否验证服务器证书:默认否
  *
- *  @param isAllow YES(是),NO(否)
+ *  @param isAllow YES(否),NO(是)
  */
 + (void)setSecurityPolicyAllowInvalidCertificates:(BOOL)isAllow;
 

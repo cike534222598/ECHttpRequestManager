@@ -288,7 +288,7 @@ static AFHTTPSessionManager *_manager = nil;
     _manager.responseSerializer = [AFJSONResponseSerializer serializer];
     
     _manager.responseSerializer.acceptableContentTypes = [NSSet setWithObjects:@"application/json", @"text/html", @"text/json", @"text/plain", @"text/javascript", @"text/xml", @"image/*", nil];
-    //关闭验证服务器证书
+    //验证服务器证书
     _manager.securityPolicy.allowInvalidCertificates = NO;
     //打开状态栏的等待菊花
     [AFNetworkActivityIndicatorManager sharedManager].enabled = YES;
