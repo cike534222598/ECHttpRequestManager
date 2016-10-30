@@ -188,28 +188,39 @@ static AFHTTPSessionManager *_manager = nil;
 
 + (NSURLSessionTask *)uploadWithURL:(NSString *)URL
                          parameters:(NSDictionary *)parameters
-                             images:(NSArray<UIImage *> *)images
-                               name:(NSString *)name
-                           fileName:(NSString *)fileName
-                           mimeType:(NSString *)mimeType
+                             files:(NSArray *)files
                            progress:(HttpProgress)progress
                             success:(HttpRequestSuccess)success
                             failure:(HttpRequestFailed)failure
 {
     ECLog(@"parameters = %@",parameters);
-    ECLog(@"images = %@",images);
-    ECLog(@"name = %@",name);
-    ECLog(@"fileName = %@",fileName);
-    ECLog(@"mimeType = %@",mimeType);
+    ECLog(@"files = %@",files);
 
     return [_manager POST:URL parameters:parameters constructingBodyWithBlock:^(id<AFMultipartFormData>  _Nonnull formData) {
         
-        //压缩-添加-上传图片
-        [images enumerateObjectsUsingBlock:^(UIImage * _Nonnull image, NSUInteger idx, BOOL * _Nonnull stop) {
+        for (NSDictionary *fileItem in files) {
+            id value = [fileItem objectForKey:@"file"];        //支持四种数据类型：NSData、UIImage、NSURL、NSString
+            NSString *name = [fileItem objectForKey:@"name"];            //文件字段的key
+            NSString *fileName = [fileItem objectForKey:@"fileName"];       //文件名称
+            NSString *mimeType = [fileItem objectForKey:@"mineType"];       //文件类型
+            mimeType = mimeType ? mimeType : @"image/jpeg";
+            name = name ? name : @"file";
             
-            NSData *imageData = UIImageJPEGRepresentation(image, 0.5);
-            [formData appendPartWithFileData:imageData name:name fileName:[NSString stringWithFormat:@"%@%lu.%@",fileName,(unsigned long)idx,mimeType?mimeType:@"jpeg"] mimeType:[NSString stringWithFormat:@"image/%@",mimeType ? mimeType : @"jpeg"]];
-        }];
+            if ([value isKindOfClass:[NSData class]]) {
+                [formData appendPartWithFileData:value name:name fileName:fileName mimeType:mimeType];
+            }else if ([value isKindOfClass:[UIImage class]]) {
+                if (UIImagePNGRepresentation(value)) {  //返回为png图像。
+                    [formData appendPartWithFileData:UIImagePNGRepresentation(value) name:name fileName:fileName mimeType:mimeType];
+                }else {   //返回为JPEG图像。
+                    [formData appendPartWithFileData:UIImageJPEGRepresentation(value, 0.5) name:name fileName:fileName mimeType:mimeType];
+                }
+            }else if ([value isKindOfClass:[NSURL class]]) {
+                [formData appendPartWithFileURL:value name:name fileName:fileName mimeType:mimeType error:nil];
+            }else if ([value isKindOfClass:[NSString class]]) {
+                [formData appendPartWithFileURL:[NSURL URLWithString:value]  name:name fileName:fileName mimeType:mimeType error:nil];
+            }
+        }
+        
     } progress:^(NSProgress * _Nonnull uploadProgress) {
         //上传进度
         progress ? progress(uploadProgress) : nil;

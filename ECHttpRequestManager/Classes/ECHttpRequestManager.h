@@ -149,7 +149,7 @@ typedef void(^HttpRequestStatus)(ECHttpRequestStatus status);
  *
  *  @return 返回的对象可取消请求,调用cancle方法
  */
-+ (__kindof NSURLSessionTask *)uploadWithURL:(NSString *)URL parameters:(NSDictionary *)parameters images:(NSArray<UIImage *> *)images name:(NSString *)name fileName:(NSString *)fileName mimeType:(NSString *)mimeType progress:(HttpProgress)progress success:(HttpRequestSuccess)success failure:(HttpRequestFailed)failure;
++ (__kindof NSURLSessionTask *)uploadWithURL:(NSString *)URL parameters:(NSDictionary *)parameters files:(NSArray *)files progress:(HttpProgress)progress success:(HttpRequestSuccess)success failure:(HttpRequestFailed)failure;
 
 /**
  *  下载文件
