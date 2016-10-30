@@ -224,6 +224,8 @@ static AFHTTPSessionManager *_manager = nil;
     } progress:^(NSProgress * _Nonnull uploadProgress) {
         //上传进度
         progress ? progress(uploadProgress) : nil;
+        ECLog(@"下载进度:%.2f%%",100.0*uploadProgress.completedUnitCount/uploadProgress.totalUnitCount);
+
     } success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
         
         success ? success(responseObject) : nil;
