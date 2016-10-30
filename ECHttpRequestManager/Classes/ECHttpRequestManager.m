@@ -199,10 +199,10 @@ static AFHTTPSessionManager *_manager = nil;
     return [_manager POST:URL parameters:parameters constructingBodyWithBlock:^(id<AFMultipartFormData>  _Nonnull formData) {
         
         for (NSDictionary *fileItem in files) {
-            id value = [fileItem objectForKey:@"file"];        //支持四种数据类型：NSData、UIImage、NSURL、NSString
-            NSString *name = [fileItem objectForKey:@"name"];            //文件字段的key
+            id value = [fileItem objectForKey:@"file"];                     //支持四种数据类型：NSData、UIImage、NSURL、NSString
+            NSString *name = [fileItem objectForKey:@"name"];               //文件字段的key
             NSString *fileName = [fileItem objectForKey:@"fileName"];       //文件名称
-            NSString *mimeType = [fileItem objectForKey:@"mineType"];       //文件类型
+            NSString *mimeType = [fileItem objectForKey:@"mimeType"];       //文件类型
             mimeType = mimeType ? mimeType : @"image/jpeg";
             name = name ? name : @"file";
             
