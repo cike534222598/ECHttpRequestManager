@@ -298,9 +298,12 @@ static AFHTTPSessionManager *_manager = nil;
     //设置请求的超时时间
     _manager.requestSerializer.timeoutInterval = 30.f;
     //设置服务器返回结果的类型:JSON (AFJSONResponseSerializer,AFHTTPResponseSerializer)
-    _manager.responseSerializer = [AFJSONResponseSerializer serializer];
+    AFJSONResponseSerializer *response = [AFJSONResponseSerializer serializer];
+    response.removesKeysWithNullValues = YES;
+    _manager.responseSerializer = response;
     
     _manager.responseSerializer.acceptableContentTypes = [NSSet setWithObjects:@"application/json", @"text/html", @"text/json", @"text/plain", @"text/javascript", @"text/xml", @"image/*", nil];
+    
     //验证服务器证书
     _manager.securityPolicy.allowInvalidCertificates = NO;
     //打开状态栏的等待菊花

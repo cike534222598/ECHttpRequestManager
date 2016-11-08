@@ -14,7 +14,7 @@ PODS:
   - AFNetworking/Serialization (3.1.0)
   - AFNetworking/UIKit (3.1.0):
     - AFNetworking/NSURLSession
-  - ECHttpRequestManager (1.0.10):
+  - ECHttpRequestManager (1.0.11):
     - AFNetworking (~> 3.1.0)
     - YYCache (~> 1.0.3)
   - YYCache (1.0.4)
@@ -28,9 +28,9 @@ EXTERNAL SOURCES:
 
 SPEC CHECKSUMS:
   AFNetworking: 5e0e199f73d8626b11e79750991f5d173d1f8b67
-  ECHttpRequestManager: 79ecf6af47a95cf0f544cbb71ac75d6b98ec86ad
+  ECHttpRequestManager: 6f3af205a6526adc00d311158d723072f4d861de
   YYCache: 8105b6638f5e849296c71f331ff83891a4942952
 
 PODFILE CHECKSUM: da305b58ce5dc10ecfb18040e47f6f07d55bd9cb
 
-COCOAPODS: 1.1.1
+COCOAPODS: 1.2.0.beta.1
