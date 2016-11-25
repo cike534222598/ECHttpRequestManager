@@ -80,9 +80,30 @@ typedef void(^HttpRequestStatus)(ECHttpRequestStatus status);
 + (void)networkStatusWithBlock:(HttpRequestStatus)httpStatus;
 
 /**
- *  一次性获取当前网络状态,有网YES,无网:NO
+ 有网YES, 无网:NO
  */
-+ (BOOL)currentNetworkStatus;
++ (BOOL)isNetwork;
+
+/**
+ 手机网络:YES, 反之:NO
+ */
++ (BOOL)isWWANNetwork;
+
+/**
+ WiFi网络:YES, 反之:NO
+ */
++ (BOOL)isWiFiNetwork;
+
+/**
+ 取消所有HTTP请求
+ */
++ (void)cancelAllRequest;
+
+/**
+ 取消指定URL的HTTP请求
+ */
++ (void)cancelRequestWithURL:(NSString *)URL;
+
 
 /**
  *  GET请求,无缓存

@@ -53,8 +53,8 @@
 
 @implementation ECHttpRequestManager
 
-static BOOL _isNetwork;
 static AFHTTPSessionManager *_manager = nil;
+static NSMutableArray *_allSessionTask;
 
 #pragma mark - 开始监听网络
 + (void)networkStatusWithBlock:(HttpRequestStatus)httpStatus
@@ -68,22 +68,18 @@ static AFHTTPSessionManager *_manager = nil;
             {
                 case AFNetworkReachabilityStatusUnknown:
                     httpStatus ? httpStatus(ECHttpRequestStatusUnknown) : nil;
-                    _isNetwork = NO;
                     ECLog(@"未知网络");
                     break;
                 case AFNetworkReachabilityStatusNotReachable:
                     httpStatus ? httpStatus(ECHttpRequestStatusNotReachable) : nil;
-                    _isNetwork = NO;
                     ECLog(@"无网络");
                     break;
                 case AFNetworkReachabilityStatusReachableViaWWAN:
                     httpStatus ? httpStatus(ECHttpRequestStatusReachableViaWWAN) : nil;
-                    _isNetwork = YES;
                     ECLog(@"手机自带网络");
                     break;
                 case AFNetworkReachabilityStatusReachableViaWiFi:
                     httpStatus ? httpStatus(ECHttpRequestStatusReachableViaWiFi) : nil;
-                    _isNetwork = YES;
                     ECLog(@"WIFI");
                     break;
             }
@@ -94,9 +90,47 @@ static AFHTTPSessionManager *_manager = nil;
 }
 
 
-+ (BOOL)currentNetworkStatus
++ (BOOL)isNetwork
 {
-    return _isNetwork;
+    return [AFNetworkReachabilityManager sharedManager].reachable;
+}
+
++ (BOOL)isWWANNetwork
+{
+    return [AFNetworkReachabilityManager sharedManager].reachableViaWWAN;
+}
+
++ (BOOL)isWiFiNetwork
+{
+    return [AFNetworkReachabilityManager sharedManager].reachableViaWiFi;
+}
+
++ (void)cancelAllRequest
+{
+    // 锁操作
+    @synchronized(self)
+    {
+        [[self allSessionTask] enumerateObjectsUsingBlock:^(NSURLSessionTask  *_Nonnull task, NSUInteger idx, BOOL * _Nonnull stop) {
+            [task cancel];
+        }];
+        [[self allSessionTask] removeAllObjects];
+    }
+}
+
++ (void)cancelRequestWithURL:(NSString *)URL
+{
+    if (!URL) { return; }
+    @synchronized (self)
+    {
+        [[self allSessionTask] enumerateObjectsUsingBlock:^(NSURLSessionTask  *_Nonnull task, NSUInteger idx, BOOL * _Nonnull stop) {
+            
+            if ([task.currentRequest.URL.absoluteString hasPrefix:URL]) {
+                [task cancel];
+                [[self allSessionTask] removeObject:task];
+                *stop = YES;
+            }
+        }];
+    }
 }
 
 
@@ -130,26 +164,31 @@ static AFHTTPSessionManager *_manager = nil;
                   success:(HttpRequestSuccess)success
                   failure:(HttpRequestFailed)failure
 {
-    ECLog(@"parameters = %@",parameters);
-
     //读取缓存
     responseCache ? responseCache([ECHttpRequestCache httpCacheForURL:URL parameters:parameters]) : nil;
     
-    return [_manager GET:URL parameters:parameters progress:^(NSProgress * _Nonnull uploadProgress) {
+    NSURLSessionTask *sessionTask = [_manager GET:URL parameters:parameters progress:^(NSProgress * _Nonnull uploadProgress) {
         
     } success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
         
+        [[self allSessionTask] removeObject:task];
         success ? success(responseObject) : nil;
         //对数据进行异步缓存
         responseCache ? [ECHttpRequestCache setHttpCache:responseObject URL:URL parameters:parameters] : nil;
         
-        ECLog(@"responseObject = %@",responseObject);
+        ECLog(@"\nbaseUrl = %@\nparameters = %@\nresponseObject = %@",URL,parameters,[self jsonToString:responseObject]);
     } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
         
+        [[self allSessionTask] removeObject:task];
         failure ? failure(error) : nil;
-        ECLog(@"error = %@",error);
+        ECLog(@"\nbaseUrl = %@\nparameters = %@\nerror = %@",URL,parameters,error);
         
     }];
+    
+    // 添加sessionTask到数组
+    sessionTask ? [[self allSessionTask] addObject:sessionTask] : nil ;
+    
+    return sessionTask;
 }
 
 
@@ -161,27 +200,32 @@ static AFHTTPSessionManager *_manager = nil;
                    success:(HttpRequestSuccess)success
                    failure:(HttpRequestFailed)failure
 {
-    ECLog(@"parameters = %@",parameters);
-
     //读取缓存
     responseCache ? responseCache([ECHttpRequestCache httpCacheForURL:URL parameters:parameters]) : nil;
     
-    return [_manager POST:URL parameters:parameters progress:^(NSProgress * _Nonnull uploadProgress) {
+    NSURLSessionTask *sessionTask = [_manager POST:URL parameters:parameters progress:^(NSProgress * _Nonnull uploadProgress) {
         
     } success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
         
+        [[self allSessionTask] removeObject:task];
         success ? success(responseObject) : nil;
         //对数据进行异步缓存
         responseCache ? [ECHttpRequestCache setHttpCache:responseObject URL:URL parameters:parameters] : nil;
         
-        ECLog(@"responseObject = %@",responseObject);
+        ECLog(@"\nbaseUrl = %@\nparameters = %@\nresponseObject = %@",URL,parameters,[self jsonToString:responseObject]);
         
     } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
         
+        [[self allSessionTask] removeObject:task];
         failure ? failure(error) : nil;
-        ECLog(@"error = %@",error);
+        ECLog(@"\nbaseUrl = %@\nparameters = %@\nerror = %@",URL,parameters,error);
     }];
     
+    // 添加最新的sessionTask到数组
+    sessionTask ? [[self allSessionTask] addObject:sessionTask] : nil ;
+    
+    return sessionTask;
+
 }
 
 #pragma mark - 上传图片文件
@@ -193,10 +237,7 @@ static AFHTTPSessionManager *_manager = nil;
                             success:(HttpRequestSuccess)success
                             failure:(HttpRequestFailed)failure
 {
-    ECLog(@"parameters = %@",parameters);
-    ECLog(@"files = %@",files);
-
-    return [_manager POST:URL parameters:parameters constructingBodyWithBlock:^(id<AFMultipartFormData>  _Nonnull formData) {
+    NSURLSessionTask *sessionTask = [_manager POST:URL parameters:parameters constructingBodyWithBlock:^(id<AFMultipartFormData>  _Nonnull formData) {
         
         for (NSDictionary *fileItem in files) {
             id value = [fileItem objectForKey:@"file"];                     //支持四种数据类型：NSData、UIImage、NSURL、NSString
@@ -228,13 +269,20 @@ static AFHTTPSessionManager *_manager = nil;
 
     } success:^(NSURLSessionDataTask * _Nonnull task, id  _Nullable responseObject) {
         
+        [[self allSessionTask] removeObject:task];
         success ? success(responseObject) : nil;
-        ECLog(@"responseObject = %@",responseObject);
+        ECLog(@"\nbaseUrl = %@\nparameters = %@\nfiles = %@\nresponseObject = %@",URL,parameters,files,[self jsonToString:responseObject]);
     } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
         
+        [[self allSessionTask] removeObject:task];
         failure ? failure(error) : nil;
-        ECLog(@"error = %@",error);
+        ECLog(@"\nbaseUrl = %@\nparameters = %@\nfiles = %@\nerror = %@",URL,parameters,files,error);
     }];
+    
+    // 添加sessionTask到数组
+    sessionTask ? [[self allSessionTask] addObject:sessionTask] : nil ;
+    
+    return sessionTask;
 }
 
 #pragma mark - 下载文件
@@ -244,8 +292,6 @@ static AFHTTPSessionManager *_manager = nil;
                               success:(void(^)(NSString *))success
                               failure:(HttpRequestFailed)failure
 {
-    ECLog(@"fileDir = %@",fileDir);
-
     NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:URL]];
     NSURLSessionDownloadTask *downloadTask = [_manager downloadTaskWithRequest:request progress:^(NSProgress * _Nonnull downloadProgress) {
         //下载进度
@@ -265,13 +311,14 @@ static AFHTTPSessionManager *_manager = nil;
         //拼接文件路径
         NSString *filePath = [downloadDir stringByAppendingPathComponent:response.suggestedFilename];
         
-        ECLog(@"downloadDir = %@",downloadDir);
+        ECLog(@"\nbaseUrl = %@\ndownloadDir = %@",URL,downloadDir);
         
         //返回文件位置的URL路径
         return [NSURL fileURLWithPath:filePath];
         
     } completionHandler:^(NSURLResponse * _Nonnull response, NSURL * _Nullable filePath, NSError * _Nullable error) {
         
+        [[self allSessionTask] removeObject:downloadTask];
         if(failure && error) {failure(error) ; return ;};
         success ? success(filePath.absoluteString /** NSURL->NSString*/) : nil;
         
@@ -280,8 +327,24 @@ static AFHTTPSessionManager *_manager = nil;
     //开始下载
     [downloadTask resume];
     
+    // 添加sessionTask到数组
+    downloadTask ? [[self allSessionTask] addObject:downloadTask] : nil ;
+
     return downloadTask;
     
+}
+
+
+/**
+ 存储着所有的请求task数组
+ */
++ (NSMutableArray *)allSessionTask
+{
+    if (!_allSessionTask)
+    {
+        _allSessionTask = [[NSMutableArray alloc] init];
+    }
+    return _allSessionTask;
 }
 
 
