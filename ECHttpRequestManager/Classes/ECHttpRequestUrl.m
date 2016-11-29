@@ -17,10 +17,10 @@
     
     // 快速遍历参数数组
     for(id key in params) {
-        NSLog(@"key :%@  value :%@", key, [params objectForKey:key]);
+//        NSLog(@"key :%@  value :%@", key, [params objectForKey:key]);
         str = [str stringByAppendingString:key];
         str = [str stringByAppendingString:@"="];
-        str = [str stringByAppendingString:[params objectForKey:key]];
+        str = [str stringByAppendingString:[params objectForKey:key] ? [params objectForKey:key] : @""];
         str = [str stringByAppendingString:@"&"];
     }
     // 处理多余的&以及返回含参url
