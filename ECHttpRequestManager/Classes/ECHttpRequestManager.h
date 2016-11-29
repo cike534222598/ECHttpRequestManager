@@ -10,6 +10,7 @@
 #import <UIKit/UIKit.h>
 
 #import "ECHttpRequestCache.h"
+#import "ECHttpRequestUrl.h"
 
 
 #pragma mark - ECHttpRequestManager扩展

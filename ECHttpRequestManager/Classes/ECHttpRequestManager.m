@@ -176,12 +176,12 @@ static NSMutableArray *_allSessionTask;
         //对数据进行异步缓存
         responseCache ? [ECHttpRequestCache setHttpCache:responseObject URL:URL parameters:parameters] : nil;
         
-        ECLog(@"\nbaseUrl = %@\nparameters = %@\nresponseObject = %@",URL,parameters,[self jsonToString:responseObject]);
+        ECLog(@"\nBaseUrl = %@\nParameters = %@\nAllUrl = %@\nResponseObject = %@",URL,parameters?parameters:@"无参数",[ECHttpRequestUrl connectUrl:parameters url:URL],[self jsonToString:responseObject]);
     } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
         
         [[self allSessionTask] removeObject:task];
         failure ? failure(error) : nil;
-        ECLog(@"\nbaseUrl = %@\nparameters = %@\nerror = %@",URL,parameters,error);
+        ECLog(@"\nBaseUrl = %@\nParameters = %@\nAllUrl = %@\nError = %@",URL,parameters?parameters:@"无参数",[ECHttpRequestUrl connectUrl:parameters url:URL],error);
         
     }];
     
@@ -212,13 +212,13 @@ static NSMutableArray *_allSessionTask;
         //对数据进行异步缓存
         responseCache ? [ECHttpRequestCache setHttpCache:responseObject URL:URL parameters:parameters] : nil;
         
-        ECLog(@"\nbaseUrl = %@\nparameters = %@\nresponseObject = %@",URL,parameters,[self jsonToString:responseObject]);
+        ECLog(@"\nBaseUrl = %@\nParameters = %@\nAllUrl = %@\nResponseObject = %@",URL,parameters?parameters:@"无参数",[ECHttpRequestUrl connectUrl:parameters url:URL],[self jsonToString:responseObject]);
         
     } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
         
         [[self allSessionTask] removeObject:task];
         failure ? failure(error) : nil;
-        ECLog(@"\nbaseUrl = %@\nparameters = %@\nerror = %@",URL,parameters,error);
+        ECLog(@"\nBaseUrl = %@\nParameters = %@\nAllUrl = %@\nError = %@",URL,parameters?parameters:@"无参数",[ECHttpRequestUrl connectUrl:parameters url:URL],error);
     }];
     
     // 添加最新的sessionTask到数组
@@ -271,12 +271,12 @@ static NSMutableArray *_allSessionTask;
         
         [[self allSessionTask] removeObject:task];
         success ? success(responseObject) : nil;
-        ECLog(@"\nbaseUrl = %@\nparameters = %@\nfiles = %@\nresponseObject = %@",URL,parameters,files,[self jsonToString:responseObject]);
+        ECLog(@"\nBaseUrl = %@\nParameters = %@\nFiles = %@\nResponseObject = %@",URL,parameters?parameters:@"无参数",files,[self jsonToString:responseObject]);
     } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
         
         [[self allSessionTask] removeObject:task];
         failure ? failure(error) : nil;
-        ECLog(@"\nbaseUrl = %@\nparameters = %@\nfiles = %@\nerror = %@",URL,parameters,files,error);
+        ECLog(@"\nBaseUrl = %@\nParameters = %@\nFiles = %@\nError = %@",URL,parameters?parameters:@"无参数",files,error);
     }];
     
     // 添加sessionTask到数组
@@ -311,7 +311,7 @@ static NSMutableArray *_allSessionTask;
         //拼接文件路径
         NSString *filePath = [downloadDir stringByAppendingPathComponent:response.suggestedFilename];
         
-        ECLog(@"\nbaseUrl = %@\ndownloadDir = %@",URL,downloadDir);
+        ECLog(@"\nBaseUrl = %@\nDownloadDir = %@",URL,downloadDir);
         
         //返回文件位置的URL路径
         return [NSURL fileURLWithPath:filePath];
@@ -357,7 +357,7 @@ static NSMutableArray *_allSessionTask;
 {
     _manager = [AFHTTPSessionManager manager];
     //设置请求参数的类型:JSON (AFJSONRequestSerializer,AFHTTPRequestSerializer)
-    //_manager.requestSerializer = [AFJSONRequestSerializer serializer];
+    _manager.requestSerializer = [AFHTTPRequestSerializer serializer];
     //设置请求的超时时间
     _manager.requestSerializer.timeoutInterval = 30.f;
     //设置服务器返回结果的类型:JSON (AFJSONResponseSerializer,AFHTTPResponseSerializer)
