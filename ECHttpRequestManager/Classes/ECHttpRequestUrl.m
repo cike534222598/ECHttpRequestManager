@@ -13,13 +13,13 @@
 + (NSString *)connectUrl:(NSMutableDictionary *)params url:(NSString *)baseUrl
 {
     // 初始化参数变量
-    NSString *str = @"&";
+    NSString *str = [[baseUrl substringFromIndex:baseUrl.length] isEqualToString:@"?"] ? @"" : @"?";
     
     // 快速遍历参数数组
     for(id key in params) {
         NSLog(@"key :%@  value :%@", key, [params objectForKey:key]);
         str = [str stringByAppendingString:key];
-        str = [str stringByAppendingString:@"＝"];
+        str = [str stringByAppendingString:@"="];
         str = [str stringByAppendingString:[params objectForKey:key]];
         str = [str stringByAppendingString:@"&"];
     }
