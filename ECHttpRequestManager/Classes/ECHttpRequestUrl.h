@@ -10,6 +10,6 @@
 
 @interface ECHttpRequestUrl : NSObject
 
-+ (NSString *)connectUrl:(NSMutableDictionary *)params url:(NSString *)baseUrl;
++ (NSString *)connectUrl:(NSDictionary *)params url:(NSString *)baseUrl;
 
 @end
