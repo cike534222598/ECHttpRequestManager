@@ -176,7 +176,7 @@ static NSMutableArray *_allSessionTask;
         //对数据进行异步缓存
         responseCache ? [ECHttpRequestCache setHttpCache:responseObject URL:URL parameters:parameters] : nil;
         
-        ECLog(@"\nBaseUrl = %@\nParameters = %@\nAllUrl = %@\nResponseObject = %@",URL,parameters?parameters:@"无参数",[ECHttpRequestUrl connectUrl:parameters url:URL],[self jsonToString:responseObject]);
+        ECLog(@"\nBaseUrl = %@\nParameters = %@\nAllUrl = %@\nResponseObject = %@",URL,parameters?parameters:@"无参数",[ECHttpRequestUrl connectUrl:parameters url:URL],responseObject);
     } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
         
         [[self allSessionTask] removeObject:task];
@@ -212,7 +212,7 @@ static NSMutableArray *_allSessionTask;
         //对数据进行异步缓存
         responseCache ? [ECHttpRequestCache setHttpCache:responseObject URL:URL parameters:parameters] : nil;
         
-        ECLog(@"\nBaseUrl = %@\nParameters = %@\nAllUrl = %@\nResponseObject = %@",URL,parameters?parameters:@"无参数",[ECHttpRequestUrl connectUrl:parameters url:URL],[self jsonToString:responseObject]);
+        ECLog(@"\nBaseUrl = %@\nParameters = %@\nAllUrl = %@\nResponseObject = %@",URL,parameters?parameters:@"无参数",[ECHttpRequestUrl connectUrl:parameters url:URL],responseObject);
         
     } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
         
@@ -271,7 +271,7 @@ static NSMutableArray *_allSessionTask;
         
         [[self allSessionTask] removeObject:task];
         success ? success(responseObject) : nil;
-        ECLog(@"\nBaseUrl = %@\nParameters = %@\nFiles = %@\nResponseObject = %@",URL,parameters?parameters:@"无参数",files,[self jsonToString:responseObject]);
+        ECLog(@"\nBaseUrl = %@\nParameters = %@\nFiles = %@\nResponseObject = %@",URL,parameters?parameters:@"无参数",files,responseObject);
     } failure:^(NSURLSessionDataTask * _Nullable task, NSError * _Nonnull error) {
         
         [[self allSessionTask] removeObject:task];
@@ -361,9 +361,7 @@ static NSMutableArray *_allSessionTask;
     //设置请求的超时时间
     _manager.requestSerializer.timeoutInterval = 30.f;
     //设置服务器返回结果的类型:JSON (AFJSONResponseSerializer,AFHTTPResponseSerializer)
-    AFJSONResponseSerializer *response = [AFJSONResponseSerializer serializer];
-    response.removesKeysWithNullValues = YES;
-    _manager.responseSerializer = response;
+    _manager.responseSerializer = [AFJSONResponseSerializer serializer];
     
     _manager.responseSerializer.acceptableContentTypes = [NSSet setWithObjects:@"application/json", @"text/html", @"text/json", @"text/plain", @"text/javascript", @"text/xml", @"image/*", nil];
     

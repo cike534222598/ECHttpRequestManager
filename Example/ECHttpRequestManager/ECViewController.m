@@ -9,9 +9,6 @@
 #import "ECViewController.h"
 #import "ECHttpRequestManager.h"
 
-static NSString *const dataUrl = @"http://api.douban.com/v2/movie/top250?apikey=02d830457f4a8f6d088890d07ddfae47";
-static NSString *const downloadUrl = @"http://wvideo.spriteapp.cn/video/2016/0328/56f8ec01d9bfe_wpd.mp4";
-
 @interface ECViewController ()
 
 @property (weak, nonatomic) IBOutlet UITextView *networkData;
@@ -27,9 +24,51 @@ static NSString *const downloadUrl = @"http://wvideo.spriteapp.cn/video/2016/032
 /** 是否开始下载*/
 @property (nonatomic, assign, getter=isDownload) BOOL download;
 
+@property (nonatomic, copy) NSString *getUrl;
+@property (nonatomic, copy) NSString *postUrl;
+@property (nonatomic, copy) NSDictionary *postParam;
+@property (nonatomic, copy) NSString *downloadUrl;
+
 @end
 
 @implementation ECViewController
+
+
+- (NSString *)getUrl
+{
+    if (!_getUrl) {
+        _getUrl = @"http://api.douban.com/v2/movie/top250?apikey=02d830457f4a8f6d088890d07ddfae47";
+    }
+    return _getUrl;
+}
+
+
+- (NSString *)postUrl
+{
+    if (!_postUrl) {
+        _postUrl = @"http://api.douban.com/v2/movie/top250";
+    }
+    return _postUrl;
+}
+
+- (NSDictionary *)postParam
+{
+    if (!_postParam) {
+        _postParam = @{
+                       @"apikey":@"02d830457f4a8f6d088890d07ddfae47"
+                       };
+    }
+    return _postParam;
+}
+
+- (NSString *)downloadUrl
+{
+    if (!_downloadUrl) {
+        _downloadUrl = @"http://wvideo.spriteapp.cn/video/2016/0328/56f8ec01d9bfe_wpd.mp4";
+    }
+    return _downloadUrl;
+}
+
 
 - (void)viewDidLoad
 {
@@ -41,13 +80,13 @@ static NSString *const downloadUrl = @"http://wvideo.spriteapp.cn/video/2016/032
             case ECHttpRequestStatusUnknown:
             case ECHttpRequestStatusNotReachable: {
                 self.networkData.text = @"没有网络";
-                [self getData:YES url:dataUrl];
+                [self getData:YES url:self.getUrl];
                 NSLog(@"无网络,加载缓存数据");
                 break;
             }
             case ECHttpRequestStatusReachableViaWWAN:
             case ECHttpRequestStatusReachableViaWiFi: {
-                [self getData:[[NSUserDefaults standardUserDefaults] boolForKey:@"isOn"] url:dataUrl];
+                [self getData:[[NSUserDefaults standardUserDefaults] boolForKey:@"isOn"] url:self.getUrl];
                 NSLog(@"有网络,请求网络数据");
                 break;
             }
@@ -111,7 +150,7 @@ static NSString *const downloadUrl = @"http://wvideo.spriteapp.cn/video/2016/032
         self.download = YES;
         [self.downloadBtn setTitle:@"取消下载" forState:UIControlStateNormal];
         
-        task = [ECHttpRequestManager downloadWithURL:downloadUrl fileDir:@"Download" progress:^(NSProgress *progress) {
+        task = [ECHttpRequestManager downloadWithURL:self.downloadUrl fileDir:@"Download" progress:^(NSProgress *progress) {
             
             CGFloat stauts = 100.f * progress.completedUnitCount/progress.totalUnitCount;
             
@@ -161,7 +200,7 @@ static NSString *const downloadUrl = @"http://wvideo.spriteapp.cn/video/2016/032
     [userDefault setBool:sender.isOn forKey:@"isOn"];
     [userDefault synchronize];
     
-    [self getData:sender.isOn url:dataUrl];
+    [self getData:sender.isOn url:self.getUrl];
 }
 
 /**
